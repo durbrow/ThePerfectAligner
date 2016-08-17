@@ -23,7 +23,7 @@ protocol Spot {
 
 func normalRandom() -> (Double, Double)
 {
-    for ;; {
+    repeat {
         let x1 = 0x1.0p-30 * Double(random()) - 1.0
         let x2 = 0x1.0p-30 * Double(random()) - 1.0
         let w = x1 * x1 + x2 * x2
@@ -60,8 +60,8 @@ extension Illumina {
     static func randomSpots(readLength readLength: Int, templateLengthAvg: Int, templatelengthStDev: Int) -> AnyGenerator<Spot> {
         assert(2 * readLength < templateLengthAvg)
         var serialNo = 0
-        return anyGenerator {
-            for ;; {
+        return AnyGenerator {
+            repeat {
                 let r = normalRandom()
                 let ipd = templateLengthAvg - 2 * readLength
                 let dif = Int(Double(templatelengthStDev) * r.0)
@@ -237,7 +237,7 @@ for pa in p {
     let seq = r[pa.range]
     let SEQ = baseString(seq)
     let QUAL = String(pa.range.map({ _ -> Character in
-        for ;; {
+        repeat {
             let v = Int(normalRandom().1 * 10.0 + 30)
             if 20...40 ~= v {
                 return Character(UnicodeScalar(v + 33))
@@ -248,7 +248,7 @@ for pa in p {
     
     if let si = s.indexOf(pa) {
         let sa = s[si]
-        let NM = zip(seq, r[sa.range]).reduce(0) { $0 + ($1.0 == $1.1 ? 0 : 1) }
+        let NM = zip(seq, r[sa.range]).filter({ $0.0 == $0.1 }).count
         if NM * 2 > sa.range.startIndex.distanceTo(sa.range.endIndex) { continue }
         let mate = s[s.indexOf(Alignment(name: sa.name, readNo: sa.readNo == 1 ? 2 : 1, range: 0...0, reversed: false))!]
         let FLAG = 0x1 | 0x2 | 0x100 | (sa.reversed ? 0x10 : 0) | (mate.reversed ? 0x20 : 0) | (sa.readNo == 1 ? 0x40 : 0) | (sa.readNo == 2 ? 0x80 : 0)
